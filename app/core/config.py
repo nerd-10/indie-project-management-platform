@@ -24,10 +24,8 @@ class Settings(BaseSettings):
     @classmethod
     def validate_jwt_secret_key(cls, value: SecretStr) -> SecretStr:
         if len(value.get_secret_value()) < 32:
-            raise ValueError("JWT secret msut be at least 32 characters long")
+            raise ValueError("JWT secret must be at least 32 characters long")
 
         return value
-
-
 
 settings = Settings()
