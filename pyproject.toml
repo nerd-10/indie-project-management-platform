@@ -32,3 +32,6 @@ testpaths = ["tests"]
 
 [tool.setuptools.packages.find]
 include = ["app*"]
+
+[tool.ruff.lint.per-file-ignores]
+"app/dependencies/auth.py" = ["B008"]
