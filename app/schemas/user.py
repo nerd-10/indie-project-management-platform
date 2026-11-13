@@ -35,3 +35,21 @@ class UserResponse(BaseModel):
     email: str
     display_name: str
     created_at: datetime
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str = Field(
+        min_length=1,
+        max_length=128,
+        repr=False,
+    )
+    @field_validator("email", mode="before")
+    @classmethod
+    def normalize_email(cls, value: object) -> object:
+        if isinstance(value, str):
+            return value.strip().lower()
+        return value
+
+class TokenResponse(BaseModel):
+    access_token : str
+    token_type: str = "bearer"
