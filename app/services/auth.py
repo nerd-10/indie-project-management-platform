@@ -1,13 +1,11 @@
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.core.exceptions import EmailAlreadyRegisteredError
 from app.core.security import hash_password
 from app.models.user import User
 from app.schemas.user import UserRegister
 
-
-class EmailAlreadyRegistered(Exception):
-    """Raised when a registration email already exists"""
 
 def register_user(db: Session, registration: UserRegister) -> User:
     user = User(
@@ -28,10 +26,12 @@ def register_user(db: Session, registration: UserRegister) -> User:
             "constraint_name",
             None,
         )
+
         if constraint_name == "uq_users_email":
-            raise EmailAlreadyRegistered from exc
+            raise EmailAlreadyRegisteredError from exc
 
         raise
+
     db.refresh(user)
 
     return user

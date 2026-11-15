@@ -1,9 +1,11 @@
+import pytest
 from sqlalchemy.orm import Session
 
+from app.core.exceptions import EmailAlreadyRegisteredError
 from app.core.security import verify_password
 from app.models.user import User
 from app.schemas.user import UserRegister
-from app.services.auth import EmailAlreadyRegistered, register_user
+from app.services.auth import register_user
 
 
 def test_register_user_creates_user(db_session: Session):
@@ -52,11 +54,8 @@ def test_register_user_rejects_duplicate_email(db_session: Session):
         display_name="Duplicate User",
     )
 
-    try:
+    with pytest.raises(EmailAlreadyRegisteredError):
         register_user(db_session, duplicate_registration)
-        assert False, "Expected EmailAlreadyRegistered"
-    except EmailAlreadyRegistered:
-        pass
 
     existing_user = db_session.get(User, original_user.id)
 
@@ -82,11 +81,8 @@ def test_register_user_session_recovers_after_duplicate(
         display_name="Duplicate User",
     )
 
-    try:
+    with pytest.raises(EmailAlreadyRegisteredError):
         register_user(db_session, duplicate_registration)
-        assert False, "Expected EmailAlreadyRegistered"
-    except EmailAlreadyRegistered:
-        pass
 
     next_registration = UserRegister(
         email="after-error@example.com",
