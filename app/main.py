@@ -8,6 +8,7 @@ from app.api.exception_handlers import (
     unexpected_exception_handler,
     validation_exception_handler,
 )
+from app.api.v1.auth import router as auth_router
 from app.core.exceptions import EmailAlreadyRegisteredError
 from app.middleware.request_id import RequestIDMiddleware
 
@@ -36,6 +37,10 @@ app.add_exception_handler(
     unexpected_exception_handler,
 )
 
+app.include_router(
+    auth_router,
+    prefix = "/api/v1",
+)
 
 @app.get("/health")
 def health_check() -> dict[str, str]:

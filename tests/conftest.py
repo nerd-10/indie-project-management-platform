@@ -1,9 +1,12 @@
 import pytest
+from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine, make_url
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.db.session import get_db
+from app.main import app
 
 
 @pytest.fixture(scope="session")
@@ -64,3 +67,17 @@ def db_session(test_engine: Engine):
         session.close()
         transaction.rollback()
         connection.close()
+
+@pytest.fixture
+def client(db_session: Session):
+    def override_get_db():
+        yield db_session
+
+    app.dependency_overrides[get_db] = override_get_db
+
+    try:
+        with TestClient(app) as test_client:
+            yield test_client
+
+    finally:
+        app.dependency_overrides.pop(get_db, None)
