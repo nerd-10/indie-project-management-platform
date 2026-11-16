@@ -1,10 +1,11 @@
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import EmailAlreadyRegisteredError
-from app.core.security import hash_password
+from app.core.security import hash_password, verify_password
 from app.models.user import User
-from app.schemas.user import UserRegister
+from app.schemas.user import UserLogin, UserRegister
 
 
 def register_user(db: Session, registration: UserRegister) -> User:
@@ -34,4 +35,17 @@ def register_user(db: Session, registration: UserRegister) -> User:
 
     db.refresh(user)
 
+    return user
+
+def authenticate_user(
+        db: Session,
+        credentials: UserLogin,
+) -> User | None:
+    user = db.scalar(
+        select(User).where(User.email == str(credentials.email))
+    )
+    if user is None:
+       return None
+    if not verify_password(credentials.password, user.password_hash):
+        return None
     return user
