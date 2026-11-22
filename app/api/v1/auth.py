@@ -4,6 +4,8 @@ from sqlalchemy.orm import Session
 from app.core.rate_limiter import SlidingWindowRateLimiter
 from app.core.security import create_access_token
 from app.db.session import get_db
+from app.dependencies.auth import get_current_user
+from app.models.user import User
 from app.schemas.user import TokenResponse, UserLogin, UserRegister, UserResponse
 from app.services.auth import authenticate_user, register_user
 
@@ -14,7 +16,7 @@ router = APIRouter(
 
 account_login_limiter = SlidingWindowRateLimiter(
     max_attempts=5,
-    window_seconds=900.
+    window_seconds=900,
 )
 
 ip_login_limiter = SlidingWindowRateLimiter(
@@ -97,3 +99,13 @@ def login(
     access_token = create_access_token(user.id)
 
     return TokenResponse(access_token=access_token)
+
+@router.get(
+    "/me",
+    response_model = UserResponse,
+    status_code = status.HTTP_200_OK,
+)
+def get_me(
+    current_user: User = Depends(get_current_user)
+) -> UserResponse:
+    return current_user
