@@ -22,12 +22,18 @@ class SlidingWindowRateLimiter:
 
         self._attempts: dict[Hashable, deque[tuple[float, UUID]]] = defaultdict(deque)
         self._lock = threading.Lock()
+        self._cleanup_interval_seconds = 60
+        self._last_cleanup = time.monotonic()
 
     def try_acquire(self, key: Hashable) -> UUID | None:
-        now = time.monotonic()
         reservation_id = uuid4()
 
         with self._lock:
+            now = time.monotonic()
+            if now - self._last_cleanup >= self._cleanup_interval_seconds:
+                self._cleanup_expired(now)
+                self._last_cleanup = now
+
             attempts = self._attempts[key]
             self._remove_expired(attempts, now)
 
@@ -56,20 +62,23 @@ class SlidingWindowRateLimiter:
         with self._lock:
             self._attempts.pop(key, None)
 
+    def _cleanup_expired(self, now: float) -> None:
+        expired_keys = []
+        for key, attempts in self._attempts.items():
+            self._remove_expired(attempts, now)
+
+            if not attempts:
+                expired_keys.append(key)
+
+        for key in expired_keys:
+            del self._attempts[key]
+
     def cleanup(self) -> None:
         now = time.monotonic()
 
         with self._lock:
-            expired_keys = []
-
-            for key, attempts in self._attempts.items():
-                self._remove_expired(attempts, now)
-
-                if not attempts:
-                    expired_keys.append(key)
-
-            for key in expired_keys:
-                del self._attempts[key]
+            self._cleanup_expired(now)
+            self._last_cleanup = now
 
     def get_retry_after(self, key: Hashable) -> int:
         now = time.monotonic()

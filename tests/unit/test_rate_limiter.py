@@ -215,3 +215,20 @@ def test_release_does_not_remove_newer_reservation(clock):
     limiter.release("user@example.com", old)
 
     assert limiter.try_acquire("user@example.com") is None
+
+def test_try_acquire_periodically_cleans_expired_keys(clock):
+    limiter = SlidingWindowRateLimiter(
+        max_attempts=2,
+        window_seconds=10,
+    )
+
+    limiter.try_acquire("old-key")
+
+    assert "old-key" in limiter._attempts
+
+    clock(60)
+
+    limiter.try_acquire("new-key")
+
+    assert "old-key" not in limiter._attempts
+    assert "new-key" in limiter._attempts
