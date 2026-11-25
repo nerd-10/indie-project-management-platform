@@ -35,4 +35,4 @@ include = ["app*"]
 
 [tool.ruff.lint.per-file-ignores]
 "app/dependencies/auth.py" = ["B008"]
-"app/api/v1/auth.py" = ["B008"]
+"app/api/v1/projects.py" = ["B008"]
